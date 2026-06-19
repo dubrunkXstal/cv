@@ -1,0 +1,29 @@
+name: "Build CV"
+description: "Собрать резюме в Docker-образе, назначенном choose_system.py"
+
+outputs:
+  base:
+    description: "Назначенный базовый образ"
+    value: ${{ steps.sys.outputs.base }}
+  pdf:
+    description: "Путь к собранному PDF"
+    value: CV/main.pdf
+
+runs:
+  using: "composite"
+  steps:
+    - name: Какой дистрибутив назначен
+      id: sys
+      shell: bash
+      run: |
+        BASE="$(python3 choose_system.py)"
+        echo "Назначенный базовый образ: $BASE"
+        echo "base=$BASE" >> "$GITHUB_OUTPUT"
+
+    - name: Собрать образ на назначенном дистрибутиве
+      shell: bash
+      run: docker build --build-arg BASE="${{ steps.sys.outputs.base }}" -t cv-builder .
+
+    - name: Скомпилировать резюме в контейнере
+      shell: bash
+      run: docker run --rm -v "$PWD":/work -w /work cv-builder

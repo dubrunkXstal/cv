@@ -1,0 +1,90 @@
+name: Build & Publish CV
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build CV (custom action)
+        uses: ./
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: cv
+          path: CV/main.pdf
+
+      - name: Prepare site for Pages
+        run: |
+          mkdir -p site
+          cp CV/main.pdf site/cv.pdf
+          cat > site/index.html <<'HTML'
+          <!doctype html>
+          <html lang="ru">
+          <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1">
+            <title>CV</title>
+            <style>
+              html,body{margin:0;height:100%}
+              .bar{font-family:sans-serif;padding:10px 16px;background:#1F4E79;color:#fff}
+              .bar a{color:#fff}
+              iframe{border:0;width:100%;height:calc(100% - 44px)}
+            </style>
+          </head>
+          <body>
+            <div class="bar">CV &middot; <a href="cv.pdf">скачать PDF</a></div>
+            <iframe src="cv.pdf"></iframe>
+          </body>
+          </html>
+          HTML
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy-pages:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - name: Download built PDF
+        uses: actions/download-artifact@v4
+        with:
+          name: cv
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: main.pdf
