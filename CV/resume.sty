@@ -1,0 +1,30 @@
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{resume}[2026/06/19 v1.0 simple one-page resume style]
+
+\RequirePackage{fontspec}
+\setmainfont{DejaVu Sans}
+
+\RequirePackage[left=1.6cm,right=1.6cm,top=1.4cm,bottom=1.4cm]{geometry}
+\RequirePackage{titlesec}
+\RequirePackage{enumitem}
+\RequirePackage{hyperref}
+\RequirePackage{xcolor}
+
+\definecolor{accent}{HTML}{1F4E79}
+\hypersetup{colorlinks=true, urlcolor=accent, linkcolor=accent}
+
+\titleformat{\section}
+  {\Large\bfseries\color{accent}}
+  {}{0pt}{}[\titlerule]
+\titlespacing{\section}{0pt}{10pt}{6pt}
+
+\setlist[itemize]{leftmargin=1.2em, itemsep=1pt, topsep=2pt, parsep=0pt}
+\pagestyle{empty}
+\setlength{\parindent}{0pt}
+
+\newcommand{\entry}[4]{
+  \textbf{#1} \hfill \textbf{#3}\\[1pt]
+  \textit{#2} \hfill \textit{#4}\\[2pt]
+}
+
+\endinput
